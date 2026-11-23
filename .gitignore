@@ -1,0 +1,91 @@
+# Downloaded LiDAR tiles and generated terrain products (including archives).
+/TrentinoData/trentino_lidar_asc/**
+/TrentinoData/avledet/**
+
+# LiDAR scans, point clouds, and elevation grids.
+*.[lL][aA][sS]
+*.[lL][aA][zZ]
+*.[eE]57
+*.[pP][cC][dD]
+*.[pP][lL][yY]
+*.[xX][yY][zZ]
+*.[pP][tT][sS]
+*.[pP][tT][xX]
+*.[aA][sS][cC]
+*.[dD][eE][mM]
+*.[dD][tT][mM]
+*.[dD][sS][mM]
+*.copc.laz
+*.lax
+
+# Raster maps, mosaics, and derived surfaces.
+*.[tT][iI][fF]
+*.[tT][iI][fF][fF]
+*.[vV][rR][tT]
+*.[iI][mM][gG]
+*.[jJ][pP]2
+*.bil
+*.bip
+*.bsq
+*.flt
+*.grd
+*.nc
+*.mbtiles
+*.pmtiles
+
+# Vector maps and their sidecars.
+*.[gG][pP][kK][gG]
+*.gpkg-wal
+*.gpkg-shm
+*.shp
+*.shx
+*.dbf
+*.prj
+*.cpg
+*.qix
+*.sbn
+*.sbx
+*.geojson
+*.geojsonl
+*.fgb
+*.gml
+*.kml
+*.kmz
+*.osm
+*.osm.pbf
+*.gdb/**
+
+# Allow traversal so configuration files inside data folders stay includable.
+!*/
+
+# Keep configuration, QGIS projects/styles, and download selection lists.
+!*.yaml
+!*.yml
+!*.json
+!*.toml
+!*.ini
+!*.cfg
+!*.conf
+!*.xml
+!*.qml
+!*.sld
+!*.qgs
+!*.qgz
+!*.txt
+
+# Generated raster metadata, overviews, world files, and partial downloads.
+*.aux.xml
+*.ovr
+*.rrd
+*.tfw
+*.tifw
+*.jgw
+*.pgw
+*.wld
+*.part
+*.qgs~
+*.qgz~
+
+# Python bytecode.
+__pycache__/
+*.py[cod]
