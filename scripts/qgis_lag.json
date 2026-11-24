@@ -1,0 +1,36 @@
+{
+  "title": "Monte Bondone – høydekurver og bratthet",
+  "crs": "EPSG:7791",
+  "layers": [
+    {
+      "name": "Høydekurver 100 m",
+      "type": "vector",
+      "source": "../TrentinoData/avledet/hoydekurver_100m_simplified.gpkg|layername=contour",
+      "line_symbol": {"line_color": "225,89,137,255", "line_width": "0.26"}
+    },
+    {
+      "name": "Høydekurver 25 m",
+      "type": "vector",
+      "source": "../TrentinoData/avledet/hoydekurver_25m_simplified.gpkg|layername=contour",
+      "line_symbol": {"line_color": "190,178,151,255", "line_width": "0.26"}
+    },
+    {
+      "name": "Høydekurver 10 m",
+      "type": "vector",
+      "source": "../TrentinoData/avledet/hoydekurver_10m_simplified.gpkg|layername=contour",
+      "line_symbol": {"line_color": "133,182,111,255", "line_width": "0.26"}
+    },
+    {
+      "name": "Høydekurver 2,5 m",
+      "type": "vector",
+      "source": "../TrentinoData/avledet/hoydekurver_2.5m_simplified.gpkg|layername=contour",
+      "line_symbol": {"line_color": "213,180,60,255", "line_width": "0.26"}
+    },
+    {
+      "name": "Bratthet – Varsom V2",
+      "type": "raster",
+      "source": "../TrentinoData/avledet/helning_5x5.tif",
+      "style": "../TrentinoData/varsomfargerV2.qml"
+    }
+  ]
+}

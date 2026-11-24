@@ -1,6 +1,17 @@
-# Downloaded LiDAR tiles and generated terrain products (including archives).
-/TrentinoData/trentino_lidar_asc/**
-/TrentinoData/avledet/**
+# Downloaded and generated data: ignore entire folders, including metadata,
+# generated styles/projects, previews, and download lists inside them.
+/TrentinoData/trentino_lidar_asc/
+/TrentinoData/avledet/
+/TrentinoData/basemap/
+
+# Pipeline output folders, regardless of the chosen map name.
+temp/
+mapdata/
+/builds/
+
+# Generated project and packaged data archives.
+/montebondone_auto.qgz
+*.zip
 
 # LiDAR scans, point clouds, and elevation grids.
 *.[lL][aA][sS]
@@ -55,23 +66,8 @@
 *.osm.pbf
 *.gdb/**
 
-# Allow traversal so configuration files inside data folders stay includable.
-!*/
-
-# Keep configuration, QGIS projects/styles, and download selection lists.
-!*.yaml
-!*.yml
-!*.json
-!*.toml
-!*.ini
-!*.cfg
-!*.conf
-!*.xml
-!*.qml
-!*.sld
-!*.qgs
-!*.qgz
-!*.txt
+# Configuration, styles, selection lists, and hand-authored QGIS projects
+# outside the generated folders remain trackable without exceptions.
 
 # Generated raster metadata, overviews, world files, and partial downloads.
 *.aux.xml
