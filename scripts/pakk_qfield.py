@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Package Monte Bondone map layers for local QField import.
+"""Package QGIS map layers for local QField import.
 
 Keep the original QGIS project untouched, preserve its embedded styles, and
 make a portable copy with relative data paths. Uses only the standard library.
+Use --all-layers for pipeline projects, including the bottommost terrain base.
+Grayscale COG masks are internal; their renderer is embedded in the project.
 """
 
 from __future__ import annotations
@@ -56,7 +58,8 @@ def portable_project(
         datasource.text = f"./{source.name}{separator}{options}"
 
     if all_layers:
-        # Retain the project's layer order, visibility, groups, and map themes.
+        # Retain order (including the bottommost base), visibility, groups,
+        # embedded raster styles/masks and map themes.
         by_id = {layer.findtext("id"): layer for layer in kept.values()}
         for node in tree.iter("layer-tree-layer"):
             node.set("source", by_id[node.get("id")].findtext("datasource"))

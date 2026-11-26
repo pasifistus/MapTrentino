@@ -1,13 +1,13 @@
 
 #download setting
 download:
-  workers: 2
+  workers: 6
 
 URL: "https://siatservices.provincia.tn.it/stemdata/2014_lidar_dtm_asc/"
 
 
-#resolution of assembled vrt file
-#first to calculate steepness, terrain curves second one for hillshade
+# Grids available for contours and colored steepness.
+# The grayscale base uses the downloaded tiles' native resolution automatically.
 terrain:
   resolution: ["0.5", "5"]
   #elevation drop in meters contour line represents
@@ -22,3 +22,13 @@ terrain:
 calculation:
   #corresponds to idex of resolution for contour calculation
   resC: 0
+
+#give single value when ident is true, else it needs to be a list with as many values as contourlines
+build:
+ identCC: True
+ contourcolor: "150,100,50,255"
+
+ identLW: False
+ linewidth: ["0.1", "0.20", "0.20" , "0.3"]
+
+ opacitysteepness: "0.45"

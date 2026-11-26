@@ -91,7 +91,7 @@ def convert(source: Path, style: Path, output: Path) -> None:
         stage_path = Path(temporary) / "klasser.tif"
         stage = gdal.GetDriverByName("GTiff").Create(
             str(stage_path), incoming.RasterXSize, incoming.RasterYSize, 1, gdal.GDT_Byte,
-            options=["TILED=YES", "BLOCKXSIZE=512", "BLOCKYSIZE=512", "COMPRESS=DEFLATE"])
+            options=["TILED=YES", "BLOCKXSIZE=512", "BLOCKYSIZE=512", "COMPRESS=DEFLATE", "BIGTIFF=YES"])
         stage.SetGeoTransform(incoming.GetGeoTransform())
         stage.SetProjection(incoming.GetProjection())
         stage.SetMetadataItem("VARSOM_CLASSES", json.dumps(classes, ensure_ascii=False))
@@ -116,7 +116,7 @@ def convert(source: Path, style: Path, output: Path) -> None:
         print("Komprimerer COG og lager oversiktsnivåer …", flush=True)
         cog = gdal.Translate(str(cog_path), str(stage_path), format="COG", creationOptions=[
             "COMPRESS=DEFLATE", "LEVEL=6", "BLOCKSIZE=512",
-            "RESAMPLING=NEAREST", "OVERVIEW_RESAMPLING=NEAREST", "BIGTIFF=IF_SAFER"])
+            "RESAMPLING=NEAREST", "OVERVIEW_RESAMPLING=NEAREST", "BIGTIFF=YES"])
         cog = None
         check = gdal.Open(str(cog_path))
         if (check.RasterXSize != incoming.RasterXSize or check.RasterYSize != incoming.RasterYSize

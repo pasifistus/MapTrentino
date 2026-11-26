@@ -1,3 +1,6 @@
+# monte calisi
+# 45.0844 11.1184 46.1023 11.1777
+
 # Trentino / Monte Bondone maps
 
 Commands used or shared in this chat; requires GDAL, Python 3 and QGIS Python bindings for the basemap script.
@@ -10,6 +13,55 @@ cd /home/olav/kartTrento
 
 The existing input `TrentinoData/avledet/terreng_05m_5x5.tif` is a smoothed 0.5 m DEM; its preparation commands were not recorded in this chat.
 
+## Install pipeline dependencies
+
+On Debian/Ubuntu, run:
+
+```bash
+bash scripts/install_dependencies.sh
+```
+
+The installer runs `sudo apt-get update` and `sudo apt-get upgrade -y` first,
+then installs `ca-certificates`, `python3`, `gdal-bin`, `python3-gdal`,
+`python3-numpy`, `python3-yaml`, and `python3-qgis`. When run as root, it omits
+`sudo`. QGIS providers and other supporting libraries are installed as package
+dependencies. Downloads and QField ZIP packaging use Python's standard library.
+
+The pipeline requires GDAL 3.12 or newer because it uses
+[`gdal raster neighbors`](https://gdal.org/en/stable/programs/gdal_raster_neighbors.html).
+The installer uses the configured APT repositories; these must supply a recent
+enough GDAL version and matching Python bindings. The current project environment
+uses Ubuntu 26.04. The installer verifies command availability, Python imports,
+GeoTIFF/COG/GeoPackage drivers, and QGIS startup without opening a window.
+
+To check existing dependencies without installing or upgrading packages:
+
+```bash
+bash scripts/install_dependencies.sh --check-only
+```
+
+Run the pipeline with `/usr/bin/python3 pipeline.py ...` to use the
+system Python packages installed by APT.
+
+Every pipeline run generates `mapdata/hillshade.tif` with
+`scripts/lag_hillshade.py`, using a native-resolution VRT assembled from that
+run's downloaded tiles. The base retains the source pixel size regardless of
+the configured contour/colored-slope grid. It is normalized to gray 60–230 and
+compressed as an 8-bit COG with DEFLATE level 6 and an internal validity mask.
+
+All TIFF writers in the pipeline and its terrain/coloring helpers explicitly
+use `BIGTIFF=YES`, including temporary elevation and slope rasters. This avoids
+the classic TIFF limit of approximately 4 GiB, even when compression makes final
+file size unpredictable. Files retain their `.tif` extension, compression and
+pixel values; QGIS and QField read them through GDAL as usual.
+
+The generated `qgis_lag.json` lists contours first, the colored Varsom slope
+overlay next, and the grayscale terrain base **last**, at full opacity. The
+QGIS builder loads its generated QML and embeds the grayscale, transparency
+and resampling settings in the project. QField packaging uses `--all-layers`,
+copies the self-contained base TIFF, and preserves that bottom position and
+embedded style. Raw DEMs and separate QML files are not needed in the QField ZIP.
+
 ## Tests
 
 Tests are collected in `tests/`. Run them from the project directory with the
@@ -18,6 +70,15 @@ scripts on Python's import path (requires GDAL and NumPy):
 ```bash
 PYTHONPATH=scripts /usr/bin/python3 -m unittest discover -s tests -v
 ```
+
+## Pipeline cleanup
+
+After a successful pipeline run, `temp/` is deleted by default. Use `--keptemp`
+(also accepted as `--keeptemp`) to retain it. Use `-c` or `--clean` to delete
+everything in the map folder except the generated `qfield_<mapname>.zip`,
+including `temp/`, `mapdata/`, the QGIS project/config, and the unpacked QField
+folder. The two cleanup options are mutually exclusive. Failed runs retain
+their files for inspection.
 
 ## LiDAR download
 
@@ -172,6 +233,9 @@ to view it. Edit the JSON list to choose layers and their order (top first).
 sources can include `|layername=contour`. Each layer has `name`, `type`
 (`vector` or `raster`) and `source`; line layers optionally accept a
 `line_symbol` object. Use `--config`, `--output`, or `--overwrite` as needed.
+Any layer can optionally set `"opacity": 0.5` for 50% opacity, from `0`
+(invisible) to `1` (fully opaque). This overrides opacity from a QML style;
+omitting it preserves the layer's existing opacity.
 
 Later, package the generated project for QField:
 
@@ -288,3 +352,58 @@ gdaldem hillshade \
 In QGIS, place the hillshade above OSM land and below roads/contours, select Multiply blending and start at 40% opacity.
 
 For QField, include the finished hillshade GeoTIFF; the source DEM and intermediate VRT can stay on the computer.
+
+## Native-resolution grayscale terrain shading from ChimaTose
+
+The hillshade script now calculates slope directly from the original DEM,
+normalizes it to gray, and compresses the finished raster:
+
+```bash
+/usr/bin/python3 scripts/lag_hillshade.py
+
+# Regenerate an existing output and its matching QGIS style.
+/usr/bin/python3 scripts/lag_hillshade.py --overwrite
+```
+
+The default input is `ChimaTose/temp/terrain/terrain_0p5m.vrt`; output is
+`ChimaTose/mapdata/hillshade_osmand.tif` with a matching `.qml` style. The original
+**0.5 m grid, 4000 × 4000 pixels**, extent and CRS are retained. The filename is
+retained for existing map layers. Processing uses unexaggerated Horn slope in
+degrees on the native grid. All light directions, altitude weights, smoothing
+and elevation resampling have been removed from this script.
+
+Flat ground is **light gray 230** and the maximum valid slope in the complete
+map is **dark gray 60**, with linear grading between them. Only the maximum
+reaches the darkest endpoint. Pixel values are rendered gray intensity, not
+slope degrees. The 60–230 range contains 171 distinct gray intensities within
+the 8-bit format.
+
+Compression follows `scripts/komprimer_bratthet.py`: a tiled **Cloud Optimized
+GeoTIFF (COG)**, lossless **DEFLATE level 6**, and **512 × 512 pixel tiles**.
+The grayscale output adds horizontal prediction (`PREDICTOR=2`) and stores
+transparency in an internal one-bit validity mask, leaving just one 8-bit gray
+band. The mask is inside the TIFF; no separate mask file is needed. Compression
+preserves full-resolution gray values and the original elevation coverage.
+Overview levels use average resampling for smooth zoomed-out display, while
+the full-resolution grid is retained.
+
+Drag the TIFF into QGIS, keeping the QML beside it. Reload the matching style
+for an existing layer. It preserves the baked gray values and uses cubic
+zoom-in resampling. Missing elevation is transparent through the internal
+mask. The TIFF records the maximum slope, processing parameters and compression
+settings. The script prints the final compressed file size.
+
+All defaults are near the top of `scripts/lag_hillshade.py`. Use `--input`,
+`--output`, `--dark-gray`, `--light-gray` and `--overwrite` to override them.
+For example:
+
+```bash
+/usr/bin/python3 scripts/lag_hillshade.py \
+  --dark-gray 80 --light-gray 220 \
+  --output ChimaTose/mapdata/steepness_muted.tif
+```
+
+`scripts/lag_bratthet_graa.py` remains an alternate entry point to this same
+implementation, with `ChimaTose/mapdata/steepness_gray.tif` as its default output.
+Requires GDAL and NumPy; run with `/usr/bin/python3`. Temporary processing
+files are removed after success or failure.

@@ -48,6 +48,8 @@ class PaletteTests(unittest.TestCase):
             original = source.read_bytes()
             with contextlib.redirect_stdout(io.StringIO()):
                 convert(source, STYLE, output)
+            with output.open("rb") as stream:
+                self.assertIn(stream.read(4), (b"II+\x00", b"MM\x00+"))
             result = gdal.Open(str(output))
             self.assertEqual(result.GetGeoTransform(), transform)
             result_crs = osr.SpatialReference(wkt=result.GetProjection())

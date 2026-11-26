@@ -84,7 +84,14 @@ def build_project(config_path: Path, output: Path, *, overwrite: bool = False) -
                 if not ok:
                     raise ValueError(f"Kan ikke laste stilen for {spec['name']}: {message}")
 
-            # Legg til i oppgitt rekkefølge: første lag i listen ligger øverst.
+            if "opacity" in spec:
+                opacity = spec["opacity"]
+                if (isinstance(opacity, bool) or not isinstance(opacity, (int, float))
+                        or not 0 <= opacity <= 1):
+                    raise ValueError(f"opacity må være et tall mellom 0 og 1: {spec['name']}")
+                layer.setOpacity(float(opacity))
+
+            # Legg til i oppgitt rekkefølge: første lag øverst, grunnkart sist.
             project.addMapLayer(layer, False)
             node = project.layerTreeRoot().addLayer(layer)
             node.setItemVisibilityChecked(True)
@@ -97,7 +104,8 @@ def build_project(config_path: Path, output: Path, *, overwrite: bool = False) -
 
         project.viewSettings().setDefaultViewExtent(QgsReferencedRectangle(extent, crs))
         output.parent.mkdir(parents=True, exist_ok=True)
-        # QGIS lagrer renderer og farger i prosjektet; QML-filen trengs ikke i QField-pakken.
+        # QGIS lagrer renderer, opasitet og maskebånd i prosjektet. Grunnkartets
+        # QML-fil trengs derfor ikke ved siden av TIFF-en i QField-pakken.
         if not project.write(str(output)):
             raise OSError(f"Kunne ikke lagre prosjektet: {output}")
         return len(specs)
