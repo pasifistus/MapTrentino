@@ -137,75 +137,75 @@ def main():
     mapdata.mkdir(parents=True, exist_ok=True)
 
     # # Generate the download list from coordinates.
-    # run(
-    #     sys.executable, "-u", ROOT / "scripts/lag_kartliste.py",
-    #     args.lat1, args.lon1, args.lat2, args.lon2,
-    #     "-o", mapdata / "downloadlist.txt",
-    #     "--url", source_url,
-    # )
+    run(
+        sys.executable, "-u", ROOT / "scripts/lag_kartliste.py",
+        args.lat1, args.lon1, args.lat2, args.lon2,
+        "-o", mapdata / "downloadlist.txt",
+        "--url", source_url,
+    )
 
 
     # # Download the maps.
-    # run(
-    #     sys.executable, "-u", ROOT / "scripts/lastned.py",
-    #     "--output", temp / "lidar_asc",
-    #     "--file-list", mapdata / "downloadlist.txt",
-    #     "--workers", config["download"]["workers"],
-    #     "--url", source_url,
-    #     "--download",
-    # )
+    run(
+        sys.executable, "-u", ROOT / "scripts/lastned.py",
+        "--output", temp / "lidar_asc",
+        "--file-list", mapdata / "downloadlist.txt",
+        "--workers", config["download"]["workers"],
+        "--url", source_url,
+        "--download",
+    )
 
     # # Assemble the LiDAR data.
-    # tiles = sorted((temp / "lidar_asc").glob("*.asc"))
-    # if not tiles:
-    #     raise RuntimeError(f"No ASC tiles found in {temp / 'lidar_asc'}")
-    # for resolution in terrain["resolution"]:
-    #     resolution_tag = str(resolution).replace(".", "p")
-    #     run(
-    #         "gdalbuildvrt",
-    #         "-a_srs", "EPSG:7791",
-    #         "-resolution", "user",
-    #         "-tr", resolution, resolution,
-    #         terrain_dir / f"terrain_{resolution_tag}m.vrt",
-    #         *tiles,
-    #     )
+    tiles = sorted((temp / "lidar_asc").glob("*.asc"))
+    if not tiles:
+        raise RuntimeError(f"No ASC tiles found in {temp / 'lidar_asc'}")
+    for resolution in terrain["resolution"]:
+        resolution_tag = str(resolution).replace(".", "p")
+        run(
+            "gdalbuildvrt",
+            "-a_srs", "EPSG:7791",
+            "-resolution", "user",
+            "-tr", resolution, resolution,
+            terrain_dir / f"terrain_{resolution_tag}m.vrt",
+            *tiles,
+        )
 
     # # Derive the base layer's full resolution from the downloaded tile grids,
     # # independently of the configured contour/colored-slope resolutions.
     native_vrt = terrain_dir / "terrain_native.vrt"
-    # run(
-    #     "gdalbuildvrt",
-    #     "-a_srs", "EPSG:7791",
-    #     "-resolution", "highest",
-    #     native_vrt,
-    #     *tiles,
-    # )
+    run(
+        "gdalbuildvrt",
+        "-a_srs", "EPSG:7791",
+        "-resolution", "highest",
+        native_vrt,
+        *tiles,
+    )
 
     # # Generate contour lines and simplify them.
     res = str(terrain["resolution"][config["calculation"]["resC"]]).replace(".", "p")
     input_vrt = terrain_dir / f"terrain_{res}m.vrt"
-    # for lines in terrain["contourlines"]:
-    #     interval_tag = str(lines).replace(".", "p")
-    #     bridge = temp / f"contours_{interval_tag}m.gpkg"
-    #     out = mapdata / f"contours_{interval_tag}m.gpkg"
+    for lines in terrain["contourlines"]:
+        interval_tag = str(lines).replace(".", "p")
+        bridge = temp / f"contours_{interval_tag}m.gpkg"
+        out = mapdata / f"contours_{interval_tag}m.gpkg"
 
-    #     run(
-    #         "gdal_contour",
-    #         "-i", lines,
-    #         "-a", "ELEV",
-    #         "-f", "GPKG",
-    #         "-nln", "contour",
-    #         input_vrt,
-    #         bridge,
-    #     )
-    #     run(
-    #         "ogr2ogr",
-    #         "-f", "GPKG",
-    #         out,
-    #         bridge,
-    #         "contour",
-    #         "-simplify", terrain["simpclines"],
-    #     )
+        run(
+            "gdal_contour",
+            "-i", lines,
+            "-a", "ELEV",
+            "-f", "GPKG",
+            "-nln", "contour",
+            input_vrt,
+            bridge,
+        )
+        run(
+            "ogr2ogr",
+            "-f", "GPKG",
+            out,
+            bridge,
+            "contour",
+            "-simplify", terrain["simpclines"],
+        )
 
     # Smooth the elevation raster with a moving average.
     window = terrain["smoothing_window"]
